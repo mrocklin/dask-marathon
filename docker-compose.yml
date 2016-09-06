@@ -7,9 +7,11 @@ services:
     environment:
       ZK_CONFIG: tickTime=2000,initLimit=10,syncLimit=5,maxClientCnxns=128,forceSync=no,clientPort=2181
       ZK_ID: 1
-
+  
   master:
-    image: mesosphere/mesos-master:1.0.0-2.0.89.ubuntu1404
+    build: .
+    container_name: mesos_master
+    hostname: mesos_master
     network_mode: host
     environment:
       MESOS_ZK: zk://127.0.0.1:2181/mesos
@@ -20,6 +22,8 @@ services:
       LIBPROCESS_IP: ${DOCKER_IP}
     depends_on:
       - zk
+    volumes:
+      - .:/dask-mesos
 
   slave-one:
     image: mesosphere/mesos-slave:1.0.0-2.0.89.ubuntu1404

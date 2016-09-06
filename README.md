@@ -13,9 +13,23 @@ export DOCKER_IP=127.0.0.1
 docker-compose up
 ```
 
-Web UIs
+With the Mesos docker setup operational, move *into* the `mesos_master` docker container
+and execute mesos and marathon job submissions
 
-That's it, use the following URLs:
+```bash
+docker exec -it mesos_master /bin/bash
+```
+
+Note: this directory, `dask-mesos` is an attached volume in the `mesos_master`.  
+
+In the `mesos_master` docker container,
+
+```
+cd /dask-mesos
+python hello-mesos.py
+```
+
+## Web UIs
 
 - http://localhost:5050/ for Mesos master UI
 - http://localhost:5051/ for the first Mesos slave UI
