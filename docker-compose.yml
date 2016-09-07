@@ -9,7 +9,9 @@ services:
       ZK_ID: 1
   
   master:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile-master
     container_name: mesos_master
     hostname: mesos_master
     network_mode: host
@@ -26,6 +28,11 @@ services:
       - .:/dask-mesos
 
   slave-one:
+    build:
+      context: .
+      dockerfile: Dockerfile-slave
+    container_name: mesos_slave_one
+    hostname: mesos_slave_one
     image: mesosphere/mesos-slave:1.0.0-2.0.89.ubuntu1404
     network_mode: host
     pid: host
@@ -51,6 +58,11 @@ services:
 
 
   slave-two:
+    build:
+      context: .
+      dockerfile: Dockerfile-slave
+    container_name: mesos_slave_two
+    hostname: mesos_slave_two
     image: mesosphere/mesos-slave:1.0.0-2.0.89.ubuntu1404
     network_mode: host
     pid: host

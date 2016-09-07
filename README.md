@@ -29,6 +29,14 @@ cd /dask-mesos
 python hello-mesos.py
 ```
 
+## Additional notes
+
+- Master and Slaves have distributed and dask installed from their respective github repos
+- Mesos container names:
+  - mesos_master
+  - mesos_slave_one
+  - mesos_slave_two
+
 ## Web UIs
 
 - http://localhost:5050/ for Mesos master UI
