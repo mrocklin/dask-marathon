@@ -12,5 +12,5 @@ RUN conda install distributed dask pandas ipython protobuf -y -q
 RUN conda clean -pt -y
 
 # get latest dask/distributed
-RUN pip install git+https://github.com/dask/dask.git
-RUN pip install git+https://github.com/dask/distributed.git
+RUN pip install git+https://github.com/dask/dask.git --upgrade
+RUN pip install git+https://github.com/dask/distributed.git zict --upgrade
