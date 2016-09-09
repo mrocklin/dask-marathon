@@ -1,0 +1,6 @@
+name: dask-mesos
+dependencies:
+  - mock
+  - pytest
+  - distributed
+  - dask
