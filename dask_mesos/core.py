@@ -1,3 +1,5 @@
+
+from collections import deque
 import logging
 import time
 from threading import Thread
@@ -29,35 +31,55 @@ class DaskMesosDeployment(object):
 
 
 class DaskMesosScheduler(Scheduler):
-    def __init__(self, target, scheduler_address, cpus=1, mem=4096, disk=2**16):
+    def __init__(self, target, scheduler, cpus=1, mem=4096, disk=2**16):
         self.target = target
-        self.workers = 0
-        self.scheduler_address = scheduler_address
+        self.scheduler = scheduler
         self.cpus = cpus
         self.mem = mem
         self.disk = disk
         self.worker_executable = '/opt/anaconda/bin/dask-worker'
+        self.status_messages = deque(maxlen=10000)
+        self.recent_offers = deque(maxlen=100)
+        self.submitted = set()
+        self.acknowledged = set()
 
     def registered(self, driver, framework_id, master_info):
         logger.info("Registered with framework id: {}".format(framework_id))
 
+    def parse_offer(self, offer):
+        r = {r.name: r.scalar.value for r in offer.resources}
+        r['hostname'] = offer.hostname
+        return r
+
     def resourceOffers(self, driver, offers):
-        logger.info("Received offers: %s", offers)
+        self.recent_offers.extend(offers)
+        # logger.info("Received offers: %s", offers)
+
         for offer in offers:
-            if self.workers >= self.target:  # ignore if satisfied
-                continue
-            task = self.task_info(offer)
-            options = {'--nthreads': self.cpus,
-                       '--memory-limit': int(self.mem * 0.7)}
-            command = '%s %s ' % (self.worker_executable, self.scheduler_address)
-            command += ' '.join(' '.join(map(str, item)) for item in options.items())
+            if (len(self.scheduler.ncores)
+              + len(self.submitted - self.acknowledged)) >= self.target:
+                continue  # ignore if satisfied
+            o = self.parse_offer(offer)
 
-            task.command.value = command
+            if (o.get('cpus', 0) > self.cpus and
+                o.get('mem', 0) > self.mem and
+                o.get('disk', 0) > self.disk):
 
-            self.workers += 1
-            logger.info("Launch task %s with offer %s", task.task_id.value,
-                        offer.id.value)
-            driver.launchTasks(offer.id, [task])
+                task = self.task_info(offer)
+                options = {'--nthreads': self.cpus,
+                           '--memory-limit': int(self.mem * 0.7)}
+                command = '%s %s ' % (self.worker_executable, self.scheduler.address)
+                command += ' '.join(' '.join(map(str, item)) for item in options.items())
+
+                task.command.value = command
+
+                logger.info("Launch task %s with offer %s", task.task_id.value,
+                            offer.id.value)
+                self.submitted.add(task.task_id.value)
+                driver.launchTasks(offer.id, [task])
+
+    def statusUpdate(self, driver, status):
+        self.status_messages.append(status)
 
     def task_info(self, offer):
         task = mesos_pb2.TaskInfo()

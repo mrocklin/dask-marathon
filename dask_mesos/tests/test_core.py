@@ -1,14 +1,16 @@
 from dask_mesos import DaskMesosDeployment
 
-from distributed.utils_test import gen_cluster
+from time import time
 
 from tornado import gen
 
-from time import time
+from distributed.core import rpc
+from distributed.utils_test import gen_cluster
+
 
 @gen_cluster(client=True, ncores=[], timeout=None)
 def test_simple(c, s):
-    DM = DaskMesosDeployment(2, s.address, cpus=1, mem=256)
+    DM = DaskMesosDeployment(2, s, cpus=1, mem=256)
     DM.start()
 
     start = time()
