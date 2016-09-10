@@ -16,7 +16,7 @@ def test_simple(c, s):
     start = time()
     while len(s.ncores) < 2:
         yield gen.sleep(0.1)
-        assert time() < start + 5
+        assert time() < start + 10
 
     yield gen.sleep(0.2)
     assert len(s.ncores) == 2  # still 2 after some time
