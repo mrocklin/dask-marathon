@@ -60,6 +60,7 @@ class DaskMesosScheduler(Scheduler):
               + len(self.submitted - self.acknowledged)) >= self.target:
                 continue  # ignore if satisfied
             o = self.parse_offer(offer)
+            logger.info("Considering offer %s", o)
 
             if (o.get('cpus', 0) > self.cpus and
                 o.get('mem', 0) > self.mem and
@@ -79,6 +80,7 @@ class DaskMesosScheduler(Scheduler):
                 driver.launchTasks(offer.id, [task])
 
     def statusUpdate(self, driver, status):
+        logger.debug("Status update: %s", status)
         self.status_messages.append(status)
 
     def task_info(self, offer):
