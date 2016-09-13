@@ -10,6 +10,8 @@ from mesos.native import MesosSchedulerDriver
 from mesos.interface import mesos_pb2
 
 logger = logging.getLogger(__file__)
+logging.basicConfig(format='%(levelname)s - %(message)s',
+                    level=logging.DEBUG)
 
 
 class DaskMesosDeployment(object):
@@ -45,6 +47,14 @@ class DaskMesosScheduler(Scheduler):
 
     def registered(self, driver, framework_id, master_info):
         logger.info("Registered with framework id: {}".format(framework_id))
+        logger.debug("Registered with frameowrk, %s, %s", framework_id,
+                master_info)
+
+    def reregistered(self, driver, master_info):
+        logger.debug("Reregistered with frameowrk, %s", master_info)
+
+    def disconnected(self, driver):
+        logger.debug("Disconnected")
 
     def parse_offer(self, offer):
         r = {r.name: r.scalar.value for r in offer.resources}
@@ -53,7 +63,7 @@ class DaskMesosScheduler(Scheduler):
 
     def resourceOffers(self, driver, offers):
         self.recent_offers.extend(offers)
-        # logger.info("Received offers: %s", offers)
+        logger.debug("Received offers: %s", offers)
 
         for offer in offers:
             if (len(self.scheduler.ncores)
@@ -79,10 +89,6 @@ class DaskMesosScheduler(Scheduler):
                 self.submitted.add(task.task_id.value)
                 driver.launchTasks(offer.id, [task])
 
-    def statusUpdate(self, driver, status):
-        logger.debug("Status update: %s", status)
-        self.status_messages.append(status)
-
     def task_info(self, offer):
         task = mesos_pb2.TaskInfo()
         id = str(uuid.uuid4())
@@ -106,3 +112,22 @@ class DaskMesosScheduler(Scheduler):
         mem.scalar.value = self.disk
 
         return task
+
+    def offerRescinded(self, driver, offerId):
+        logger.debug("Offer rescinded: %s", offerId)
+
+    def frameworkMessage(self, driver, executorId, slaveId, message):
+        logger.debug("Framework message.  executorId: %s, slaveId: %s, message: %s", executorId, slaveId, message)
+
+    def slaveLost(self, driver, slaveId):
+        logger.debug("Slave lost: %s", slaveId)
+
+    def executorLost(self, driver, executorId, slaveId, status):
+        logger.debug("Executor lost: executorId: %s, slaveId: %s, status: %s", executorId, slaveId, status)
+
+    def error(self, driver, message):
+        logger.info("error: %s", message)
+
+    def statusUpdate(self, driver, status):
+        logger.debug("Status update: %s", status)
+        self.status_messages.append(status)
