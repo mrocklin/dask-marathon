@@ -86,7 +86,6 @@ services:
     depends_on:
       - zk
 
-
   marathon:
     image: mesosphere/marathon:v1.2.0-RC6
     network_mode: host
