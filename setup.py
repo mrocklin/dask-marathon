@@ -6,7 +6,7 @@ from setuptools import setup
 setup(name='dask_mesos',
       version='0.0.1',
       description='Deploy Dask on Mesos',
-      url='http://github.com/dask/dask-mesos/',
+      url='http://github.com/dask/dask-marathon/',
       maintainer='Matthew Rocklin',
       maintainer_email='mrocklin@gmail.com',
       license='BSD',

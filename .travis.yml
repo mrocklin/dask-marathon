@@ -43,7 +43,7 @@ install:
   - which python
 
 script:
-  - docker exec -it mesos_master py.test /dask-mesos/dask_mesos/tests -s -vv
+  - py.test dask_marathon --verbose
 
 after_success:
   - pip install coveralls

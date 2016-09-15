@@ -1,10 +1,10 @@
-Dask-Mesos
+Dask-Marathon
 ==========
 
 |Build Status|
 
-.. |Build Status| image:: https://travis-ci.org/dask/dask-mesos.svg
-   :target: https://travis-ci.org/dask/dask-mesos
+.. |Build Status| image:: https://travis-ci.org/dask/dask-marathon.svg
+   :target: https://travis-ci.org/dask/dask-marathon
 
 A simple Mesos Scheduler to deploy Dask.distributed workers.
 
@@ -25,17 +25,9 @@ docker-compose.
    export DOCKER_IP=127.0.0.1
    docker-compose up
 
-With the Mesos docker setup operational, move *into* the ``mesos_master``
-docker container and run py.test
+Run py.test::
 
-::
-
-    docker exec -it mesos_master /bin/bash
-    cd dask-mesos
-    py.test dask_mesos
-
-This directory, ``dask-mesos`` is an attached volume in the ``mesos_master``.
-
+   py.test dask-marathon
 
 Additional notes
 ----------------
@@ -61,3 +53,5 @@ History
 -------
 
 Mesos Docker-compose solution originally forked from https://github.com/bobrik/mesos-compose
+
+This project was then forked from dask-mesos.

@@ -7,7 +7,7 @@ services:
     environment:
       ZK_CONFIG: tickTime=2000,initLimit=10,syncLimit=5,maxClientCnxns=128,forceSync=no,clientPort=2181
       ZK_ID: 1
-  
+
   master:
     build:
       context: .
@@ -24,8 +24,6 @@ services:
       LIBPROCESS_IP: ${DOCKER_IP}
     depends_on:
       - zk
-    volumes:
-      - .:/dask-mesos
 
   slave-one:
     build:

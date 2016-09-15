@@ -1,4 +1,4 @@
-name: dask-mesos
+name: dask-marathon
 dependencies:
   - mock
   - pytest
