@@ -32,8 +32,15 @@ def test_simple(c, s):
         assert s.transition_log
 
         if s.worker_info:
-            names = {d['name'] for d in s.worker_info.values()}
             tasks = C.client.list_tasks(app_id=C.app.id)
+            names = {d['name'] for d in s.worker_info.values()}
             assert names == {t.id for t in tasks}
 
-        to_release = C.workers_to_close()
+        yield C._retire_workers()
+
+        start = time()
+        while len(s.worker_info) > 1:
+            yield gen.sleep(0.01)
+            assert time() < start + 5
+
+        assert len(s.who_has) == len(futures)
