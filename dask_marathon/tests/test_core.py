@@ -25,7 +25,15 @@ def test_simple(c, s):
         while not s.ready:
             yield gen.sleep(0.01)
             assert time() < start + 5
+
         C.adapt()
 
         results = yield c._gather(futures)
         assert s.transition_log
+
+        if s.worker_info:
+            names = {d['name'] for d in s.worker_info.values()}
+            tasks = C.client.list_tasks(app_id=C.app.id)
+            assert names == {t.id for t in tasks}
+
+        to_release = C.workers_to_close()

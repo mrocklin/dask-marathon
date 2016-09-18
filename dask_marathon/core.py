@@ -12,11 +12,12 @@ class ResponsiveCluster(object):
         self.minimum_instances = minimum_instances
         self.marathon_address = marathon_address
 
-        args = [executable, scheduler.address]
+        args = [executable, scheduler.address,
+                '--name', '$MESOS_TASK_ID']
         if 'mem' in kwargs:
             args.extend(['--memory-limit',
                          str(int(kwargs['mem'] * 0.6 * 1e6))])
-        kwargs['args'] = args
+        kwargs['cmd'] = ' '.join(args)
 
         app = MarathonApp(instances=minimum_instances, **kwargs)
         self.app = self.client.create_app(name or 'dask-%s' % uuid.uuid4(), app)
