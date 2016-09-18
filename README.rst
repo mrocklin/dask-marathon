@@ -6,7 +6,13 @@ Dask-Marathon
 .. |Build Status| image:: https://travis-ci.org/dask/dask-marathon.svg
    :target: https://travis-ci.org/dask/dask-marathon
 
-A simple Mesos Scheduler to deploy Dask.distributed workers.
+Deploy ``dask-worker`` processes on Marathon in response to load on a Dask
+scheduler.  This creates a Marathon application of dask-worker processes.  It
+watches a Dask Scheduler object in the local process and, based on current
+requested load, scales the Marathon application up and down.
+
+This is experimental and there is lots to do to determine how to use it in
+production well.
 
 Run
 ---
@@ -33,7 +39,8 @@ Start a Scheduler in that IOLoop
     s.start()
 
 Start a dask-marathon cluster.  Give it the scheduler, information about the
-application, and the address of the Marathon master.  See
+application, and the address of the Marathon master.  This example assumes that
+``dask-worker`` is available in the system environment, but see see
 ``marathon.MarathonApp`` for possible keyword args to define the application,
 including docker containers, etc..
 
@@ -45,7 +52,7 @@ including docker containers, etc..
                                **kwargs)
 
 Create a Client and submit work to the scheduler.  Marathon will scale workers
-up and down as neccessary.
+up and down as neccessary in response to current workload.
 
 .. code-block:: python
 
