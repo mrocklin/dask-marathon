@@ -2,6 +2,7 @@ import logging
 import uuid
 
 from marathon import MarathonClient, MarathonApp
+from tornado.ioloop import PeriodicCallback
 from tornado import gen
 
 logger = logging.getLogger(__file__)
@@ -16,6 +17,9 @@ class ResponsiveCluster(object):
         self.scheduler = scheduler
         self.minimum_instances = minimum_instances
         self.marathon_address = marathon_address
+        self._adapt_callback = PeriodicCallback(self.adapt, 1000,
+                self.scheduler.loop)
+        self._adapt_callback.start()
 
         args = [executable, scheduler.address,
                 '--name', '$MESOS_TASK_ID']
@@ -47,7 +51,7 @@ class ResponsiveCluster(object):
         while idle:
             w = idle.pop()
             limit -= limit_bytes[w]
-            if limit > 2 * total:  # still plenty of space
+            if limit >= 2 * total:  # still plenty of space
                 to_release.append(w)
             else:
                 break
@@ -66,9 +70,12 @@ class ResponsiveCluster(object):
         keys = {k for k in keys if self.scheduler.who_has[k].issubset(workers)}
 
         other_workers = set(self.scheduler.worker_info) - workers
-
-        yield self.scheduler.replicate(keys=keys, workers=other_workers, n=1,
-                             delete=False)
+        if keys:
+            if other_workers:
+                yield self.scheduler.replicate(keys=keys, workers=other_workers,
+                                               n=1, delete=False)
+            else:
+                raise gen.Return()
 
         logger.info("Retiring workers %s", workers)
         for w in workers:
@@ -78,7 +85,7 @@ class ResponsiveCluster(object):
 
     def adapt(self):
         if self.should_scale_up():
-            instances = max(2, len(self.scheduler.ncores) * 2)
+            instances = max(1, len(self.scheduler.ncores) * 2)
             self.client.scale_app(self.app.id, instances=instances)
 
         self.retire_workers()

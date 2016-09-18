@@ -1,7 +1,8 @@
-from distributed.utils_test import gen_cluster
+from distributed.utils_test import gen_cluster, loop, slowinc
 
-from time import time
+from time import time, sleep
 
+from distributed import Client
 from dask_marathon import ResponsiveCluster
 from tornado import gen
 
@@ -44,3 +45,27 @@ def test_simple(c, s):
             assert time() < start + 5
 
         assert len(s.who_has) == len(futures)
+
+
+
+def test_sync(loop):
+    from threading import Thread
+    thread = Thread(target=loop.start); thread.daemon = True
+    thread.start()
+    from distributed import Scheduler
+    s = Scheduler(loop=loop)
+    s.start(0)
+    with ResponsiveCluster(s, cpus=1, mem=1000,
+            executable='/opt/anaconda/bin/dask-worker') as cluster:
+        with Client(s.address, loop=loop) as c:
+            assert not s.ncores
+            x = c.submit(lambda x: x + 1, 1)
+            x.result()
+            assert len(s.ncores) == 1
+
+            del x
+
+            start = time()
+            while s.ncores:
+                sleep(0.01)
+                assert time() < start + 5
