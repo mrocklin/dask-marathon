@@ -6,8 +6,6 @@ import uuid
 from distributed.deploy import Adaptive
 
 from marathon import MarathonClient, MarathonApp
-from tornado.ioloop import PeriodicCallback
-from tornado import gen
 
 logger = logging.getLogger(__file__)
 
@@ -34,16 +32,15 @@ class AdaptiveCluster(Adaptive):
         super(AdaptiveCluster, self).__init__()
 
     def scale_up(self, instances):
-        instances = max(1, len(self.scheduler.ncores) * 2)
         self.executor.submit(self.client.scale_app,
                 self.app.id, instances=instances)
 
     def scale_down(self, workers):
         for w in workers:
             self.executor.submit(self.client.kill_task,
-                                       self.app.id,
-                                       self.scheduler.worker_info[w]['name'],
-                                       scale=True)
+                                 self.app.id,
+                                 self.scheduler.worker_info[w]['name'],
+                                 scale=True)
 
     def __enter__(self):
         return self

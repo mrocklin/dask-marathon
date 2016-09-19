@@ -46,10 +46,10 @@ including docker containers, etc..
 
 .. code-block:: python
 
-   from dask_marathon import ResponsiveCluster
-   cluster = ResponsiveCluster(s, marathon_address='http://localhost:8080',
-                               cpus=1, mem=1000, executable='dask-worker',
-                               **kwargs)
+   from dask_marathon import AdaptiveCluster
+   cluster = AdaptiveCluster(s, marathon_address='http://localhost:8080',
+                             cpus=1, mem=1000, executable='dask-worker',
+                             **kwargs)
 
 Create a Client and submit work to the scheduler.  Marathon will scale workers
 up and down as neccessary in response to current workload.
