@@ -3,19 +3,19 @@ from distributed.utils_test import gen_cluster, loop, slowinc
 from time import time, sleep
 
 from distributed import Client
-from dask_marathon import ResponsiveCluster
+from dask_marathon import AdaptiveCluster
 from tornado import gen
 
 from marathon import MarathonClient
 cg = MarathonClient('http://localhost:8080')
 
 for app in cg.list_apps():
-    cg.delete_app(app.id)
+    cg.delete_app(app.id, force=True)
 
 
 @gen_cluster(client=True, ncores=[])
 def test_simple(c, s):
-    with ResponsiveCluster(s, cpus=1, mem=256,
+    with AdaptiveCluster(s, cpus=1, mem=256,
             executable='/opt/anaconda/bin/dask-worker') as C:
         C.adapt()
         yield gen.sleep(0.1)
@@ -47,7 +47,6 @@ def test_simple(c, s):
         assert len(s.who_has) == len(futures)
 
 
-
 def test_sync(loop):
     from threading import Thread
     thread = Thread(target=loop.start); thread.daemon = True
@@ -55,7 +54,7 @@ def test_sync(loop):
     from distributed import Scheduler
     s = Scheduler(loop=loop)
     s.start(0)
-    with ResponsiveCluster(s, cpus=1, mem=1000,
+    with AdaptiveCluster(s, cpus=1, mem=1000,
             executable='/opt/anaconda/bin/dask-worker') as cluster:
         with Client(s.address, loop=loop) as c:
             assert not s.ncores

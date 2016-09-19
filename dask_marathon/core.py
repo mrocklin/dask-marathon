@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 import logging
 import uuid
 
-from distributed.deploy import Responsive
+from distributed.deploy import Adaptive
 
 from marathon import MarathonClient, MarathonApp
 from tornado.ioloop import PeriodicCallback
@@ -12,7 +12,7 @@ from tornado import gen
 logger = logging.getLogger(__file__)
 
 
-class ResponsiveCluster(Responsive):
+class AdaptiveCluster(Adaptive):
     def __init__(self, scheduler, executable='dask-worker',
             marathon_address='http://localhost:8080', name=None,
             minimum_instances=0, **kwargs):
@@ -32,13 +32,12 @@ class ResponsiveCluster(Responsive):
 
         app = MarathonApp(instances=minimum_instances, **kwargs)
         self.app = self.client.create_app(name or 'dask-%s' % uuid.uuid4(), app)
-        super(ResponsiveCluster, self).__init__()
+        super(AdaptiveCluster, self).__init__()
 
     @gen.coroutine
     def scale_up(self, instances):
         instances = max(1, len(self.scheduler.ncores) * 2)
-        yield self.executor.submit(self.client.scale_app,
-                                   self.app.id, instances=instances)
+        self.client.scale_app(self.app.id, instances=instances)
 
     @gen.coroutine
     def scale_down(self, workers):

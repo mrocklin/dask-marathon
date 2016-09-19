@@ -1,1 +1,1 @@
-from .core import ResponsiveCluster
+from .core import AdaptiveCluster
