@@ -20,7 +20,7 @@ class AdaptiveCluster(Adaptive):
 
         # Create Marathon App to run dask-worker
         args = [executable, scheduler.address,
-                '--name', '$MESOS_TASK_ID']
+                '--name', '$MESOS_TASK_ID']  # use Mesos task ID as worker name
         if 'mem' in kwargs:
             args.extend(['--memory-limit',
                          str(int(kwargs['mem'] * 0.6 * 1e6))])
@@ -33,16 +33,14 @@ class AdaptiveCluster(Adaptive):
 
         super(AdaptiveCluster, self).__init__()
 
-    @gen.coroutine
     def scale_up(self, instances):
         instances = max(1, len(self.scheduler.ncores) * 2)
-        yield self.executor.submit(self.client.scale_app,
+        self.executor.submit(self.client.scale_app,
                 self.app.id, instances=instances)
 
-    @gen.coroutine
     def scale_down(self, workers):
         for w in workers:
-            yield self.executor.submit(self.client.kill_task,
+            self.executor.submit(self.client.kill_task,
                                        self.app.id,
                                        self.scheduler.worker_info[w]['name'],
                                        scale=True)
