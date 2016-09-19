@@ -1,3 +1,5 @@
+
+from concurrent.futures import ThreadPoolExecutor
 import logging
 import uuid
 
@@ -19,6 +21,7 @@ class ResponsiveCluster(Responsive):
         self.scheduler = scheduler
         self.minimum_instances = minimum_instances
         self.marathon_address = marathon_address
+        self.executor = ThreadPoolExecutor(1)
 
         args = [executable, scheduler.address,
                 '--name', '$MESOS_TASK_ID']
@@ -31,15 +34,19 @@ class ResponsiveCluster(Responsive):
         self.app = self.client.create_app(name or 'dask-%s' % uuid.uuid4(), app)
         super(ResponsiveCluster, self).__init__()
 
+    @gen.coroutine
     def scale_up(self, instances):
         instances = max(1, len(self.scheduler.ncores) * 2)
-        self.client.scale_app(self.app.id, instances=instances)
+        yield self.executor.submit(self.client.scale_app,
+                                   self.app.id, instances=instances)
 
+    @gen.coroutine
     def scale_down(self, workers):
         for w in workers:
-            self.client.kill_task(self.app.id,
-                                  self.scheduler.worker_info[w]['name'],
-                                  scale=True)
+            yield self.executor.submit(self.client.kill_task,
+                                       self.app.id,
+                                       self.scheduler.worker_info[w]['name'],
+                                       scale=True)
 
     def __enter__(self):
         return self
