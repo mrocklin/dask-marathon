@@ -21,14 +21,27 @@ class MarathonCluster(object):
 
         # Create Marathon App to run dask-worker
         args = [executable, scheduler.address,
-                '--name', '$MESOS_TASK_ID']  # use Mesos task ID as worker name
+                '--name', '$MESOS_TASK_ID',  # use Mesos task ID as worker name
+                '--worker-port', '$PORT_WORKER',
+                '--nanny-port', '$PORT_NANNY',
+                '--http-port', '$PORT_HTTP']
+
+        ports = [{'port': 0,
+                  'protocol': 'tcp',
+                  'name': name}
+                 for name in ['worker', 'nanny', 'http']]
+
         if 'mem' in kwargs:
             args.extend(['--memory-limit',
                          str(int(kwargs['mem'] * 0.6 * 1e6))])
+
         kwargs['cmd'] = ' '.join(args)
         container = MarathonContainer({'image': docker_image})
 
-        app = MarathonApp(instances=0, container=container, **kwargs)
+        app = MarathonApp(instances=0,
+                          container=container,
+                          port_definitions=ports,
+                          **kwargs)
 
         # Connect and register app
         self.client = MarathonClient(marathon_address)
