@@ -1,9 +1,8 @@
+from __future__ import print_function, division, absolute_import
 
 from concurrent.futures import ThreadPoolExecutor
 import logging
 import uuid
-
-from distributed.deploy import Adaptive
 
 from marathon import MarathonClient, MarathonApp
 from marathon.models.container import MarathonContainer
@@ -11,7 +10,7 @@ from marathon.models.container import MarathonContainer
 logger = logging.getLogger(__file__)
 
 
-class AdaptiveCluster(Adaptive):
+class MarathonCluster(object):
     def __init__(self, scheduler,
                  executable='dask-worker',
                  docker_image='mrocklin/dask-distributed',
@@ -34,8 +33,6 @@ class AdaptiveCluster(Adaptive):
         # Connect and register app
         self.client = MarathonClient(marathon_address)
         self.app = self.client.create_app(name or 'dask-%s' % uuid.uuid4(), app)
-
-        super(AdaptiveCluster, self).__init__()
 
     def scale_up(self, instances):
         self.executor.submit(self.client.scale_app,

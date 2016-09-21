@@ -1,1 +1,1 @@
-from .core import AdaptiveCluster
+from .core import MarathonCluster
