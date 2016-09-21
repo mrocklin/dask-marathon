@@ -6,13 +6,17 @@ import uuid
 from distributed.deploy import Adaptive
 
 from marathon import MarathonClient, MarathonApp
+from marathon.models.container import MarathonContainer
 
 logger = logging.getLogger(__file__)
 
 
 class AdaptiveCluster(Adaptive):
-    def __init__(self, scheduler, executable='dask-worker',
-            marathon_address='http://localhost:8080', name=None, **kwargs):
+    def __init__(self, scheduler,
+                 executable='dask-worker',
+                 docker_image='mrocklin/dask-distributed',
+                 marathon_address='http://localhost:8080',
+                 name=None, **kwargs):
         self.scheduler = scheduler
         self.executor = ThreadPoolExecutor(1)
 
@@ -23,7 +27,9 @@ class AdaptiveCluster(Adaptive):
             args.extend(['--memory-limit',
                          str(int(kwargs['mem'] * 0.6 * 1e6))])
         kwargs['cmd'] = ' '.join(args)
-        app = MarathonApp(instances=0, **kwargs)
+        container = MarathonContainer({'image': docker_image})
+
+        app = MarathonApp(instances=0, container=container, **kwargs)
 
         # Connect and register app
         self.client = MarathonClient(marathon_address)

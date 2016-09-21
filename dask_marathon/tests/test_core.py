@@ -13,10 +13,9 @@ for app in cg.list_apps():
     cg.delete_app(app.id, force=True)
 
 
-@gen_cluster(client=True, ncores=[])
+@gen_cluster(client=True, ncores=[], timeout=20)
 def test_simple(c, s):
-    with AdaptiveCluster(s, cpus=1, mem=256,
-            executable='/opt/anaconda/bin/dask-worker') as C:
+    with AdaptiveCluster(s, cpus=1, mem=256) as C:
         C.adapt()
         yield gen.sleep(0.1)
         assert not s.ncores
