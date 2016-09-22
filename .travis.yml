@@ -10,8 +10,6 @@ services:
 
 matrix:
   include:
-    - python: "2.7"
-      env: OS=ubuntu-14.04
     - python: "3.5"
       env: OS=ubuntu-14.04
 
@@ -23,7 +21,6 @@ env:
 before_install:
   - pwd
 
-
   # Install docker
   - bash ci/scripts/travis_docker_setup.sh
   - docker version
@@ -33,6 +30,8 @@ before_install:
   - bash ci/scripts/conda_setup.sh
   - export PATH="$HOME/miniconda/bin:$PATH"
 
+  - pip install git+https://github.com/dask/distributed.git --upgrade
+
   # Start containers
   - export DOCKER_IP=127.0.0.1
   - docker-compose up -d
@@ -41,9 +40,10 @@ before_install:
 
 install:
   - which python
+  - python setup.py install
 
 script:
-  - py.test dask_marathon --verbose
+  - py.test dask_marathon/tests/ --verbose
 
 after_success:
   - pip install coveralls
