@@ -17,7 +17,6 @@ env:
   global:
     - DOCKER_COMPOSE_VERSION=1.6.0
 
-
 before_install:
   - pwd
 
