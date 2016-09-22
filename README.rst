@@ -11,8 +11,8 @@ scheduler.  This creates a Marathon application of dask-worker processes.  It
 watches a Dask Scheduler object in the local process and, based on current
 requested load, scales the Marathon application up and down.
 
-This is experimental and there is lots to do to determine how to use it in
-production well.
+This project is a proof of concept only.  No guarantee of quality or future
+maintenance is made.
 
 Run
 ---
@@ -62,10 +62,17 @@ up and down as neccessary in response to current workload.
    future = c.submit(lambda x: x + 1, 10)
 
 
-Test locally
-------------
+TODO
+----
 
-This sets up a docker cluster of one Mesos master and two Mesos slaves using
+-  Deploy the scheduler on the cluster
+-  Support a command line interface
+
+
+Docker Testing Harness
+----------------------
+
+This sets up a docker cluster of one Mesos master and two Mesos agents using
 docker-compose.
 
 **Requires**:
@@ -83,9 +90,9 @@ Run py.test::
    py.test dask-marathon
 
 Additional notes
-----------------
+~~~~~~~~~~~~~~~~
 
-- Master and Slaves have dask.distributed installed its github repository
+- Master and Agents have dask.distributed installed its github repository
 - Mesos container names:
   - mesos_master
   - mesos_slave_one
@@ -93,17 +100,17 @@ Additional notes
 
 
 Web UIs
--------
+~~~~~~~
 
 - http://localhost:5050/ for Mesos master UI
-- http://localhost:5051/ for the first Mesos slave UI
-- http://localhost:5052/ for the second Mesos slave UI
+- http://localhost:5051/ for the first Mesos agent UI
+- http://localhost:5052/ for the second Mesos agent UI
 - http://localhost:8080/ for Marathon UI
 - http://localhost:8888/ for Chronos UI
 
 
 History
--------
+~~~~~~~
 
 Mesos Docker-compose solution originally forked from https://github.com/bobrik/mesos-compose
 
