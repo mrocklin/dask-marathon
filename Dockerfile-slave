@@ -4,13 +4,10 @@ RUN apt-get install curl -y
 RUN curl -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
 RUN bash miniconda.sh -f -b -p /opt/anaconda
 ENV PATH /opt/anaconda/bin:$PATH
+
 # location of mesos packages
 ENV PYTHONPATH /usr/lib/python2.7/site-packages/ 
 
 RUN conda update conda -y
-RUN conda install distributed dask pandas ipython protobuf -y -q
+RUN conda install distributed=1.15.2 dask pandas ipython protobuf -y -q -c conda-forge
 RUN conda clean -pt -y
-
-# get latest dask/distributed
-RUN pip install git+https://github.com/dask/dask.git --upgrade
-RUN pip install git+https://github.com/dask/distributed.git zict --upgrade
