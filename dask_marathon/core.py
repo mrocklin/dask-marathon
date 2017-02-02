@@ -13,7 +13,7 @@ logger = logging.getLogger(__file__)
 class MarathonCluster(object):
     def __init__(self, scheduler,
                  executable='dask-worker',
-                 docker_image='mrocklin/dask-distributed',
+                 docker_image='mrocklin/dask-distributed:1.15.2',
                  marathon_address='http://localhost:8080',
                  name=None, **kwargs):
         self.scheduler = scheduler
@@ -23,13 +23,14 @@ class MarathonCluster(object):
         args = [executable, scheduler.address,
                 '--name', '$MESOS_TASK_ID',  # use Mesos task ID as worker name
                 '--worker-port', '$PORT_WORKER',
+                '--bokeh-port', '$PORT_BOKEH',
                 '--nanny-port', '$PORT_NANNY',
                 '--http-port', '$PORT_HTTP']
 
         ports = [{'port': 0,
                   'protocol': 'tcp',
                   'name': name}
-                 for name in ['worker', 'nanny', 'http']]
+                 for name in ['worker', 'nanny', 'http', 'bokeh']]
 
         if 'mem' in kwargs:
             args.extend(['--memory-limit',
