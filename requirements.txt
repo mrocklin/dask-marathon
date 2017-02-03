@@ -1,2 +1,0 @@
-distributed
-marathon==0.8.9
