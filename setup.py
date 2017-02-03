@@ -12,7 +12,9 @@ setup(name='dask_marathon',
       license='BSD',
       keywords='',
       packages=['dask_marathon'],
-      install_requires=list(open('requirements.txt').read().strip().split('\n')),
+      tests_require=['pytest'],
+      setup_requires=['pytest-runner'],
+      install_requires=['distributed', 'marathon==0.8.9'],
       long_description=(open('README.rst').read() if exists('README.rst')
                         else ''),
       zip_safe=False)

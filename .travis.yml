@@ -29,8 +29,6 @@ before_install:
   - bash ci/scripts/conda_setup.sh
   - export PATH="$HOME/miniconda/bin:$PATH"
 
-  - pip install git+https://github.com/dask/distributed.git --upgrade
-
   # Start containers
   - export DOCKER_IP=127.0.0.1
   - docker-compose up -d
@@ -38,11 +36,11 @@ before_install:
   - docker images
 
 install:
-  - which python
-  - python setup.py install
+  - conda install distributed
 
 script:
-  - py.test dask_marathon/tests/ --verbose
+  - which python
+  - python setup.py test
 
 after_success:
   - pip install coveralls
