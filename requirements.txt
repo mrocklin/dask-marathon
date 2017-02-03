@@ -1,2 +1,2 @@
 distributed
-marathon
+marathon==0.8.9
