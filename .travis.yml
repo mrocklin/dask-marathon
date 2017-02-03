@@ -38,7 +38,7 @@ before_install:
 install:
   - conda install distributed
 
-test:
+script:
   - which python
   - python setup.py test
 
