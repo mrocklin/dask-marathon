@@ -29,13 +29,14 @@ before_install:
   - bash ci/scripts/conda_setup.sh
   - export PATH="$HOME/miniconda/bin:$PATH"
 
-  - pip install git+https://github.com/dask/distributed.git --upgrade
-
   # Start containers
   - export DOCKER_IP=127.0.0.1
   - docker-compose up -d
   - docker ps -a
   - docker images
+
+install:
+  - conda install distributed
 
 test:
   - which python
