@@ -6,7 +6,7 @@ from setuptools import setup
 setup(name='dask_marathon',
       version='0.0.1',
       description='Deploy Dask on Marathon',
-      url='http://github.com/dask/dask-marathon/',
+      url='http://github.com/mrocklin/dask-marathon/',
       maintainer='Matthew Rocklin',
       maintainer_email='mrocklin@gmail.com',
       license='BSD',
