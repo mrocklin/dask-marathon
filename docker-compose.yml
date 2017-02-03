@@ -1,96 +1,146 @@
 version: "2"
 
 services:
-  zk:
-    image: bobrik/zookeeper
+  zookeeper:
     network_mode: host
-    environment:
-      ZK_CONFIG: tickTime=2000,initLimit=10,syncLimit=5,maxClientCnxns=128,forceSync=no,clientPort=2181
-      ZK_ID: 1
-
-  master:
-    build:
-      context: .
-      dockerfile: Dockerfile-master
-    container_name: mesos_master
-    hostname: mesos_master
+    image: zookeeper:3.4.9
+ 
+  mesos-master:
+    image: mesosphere/mesos-master:1.1.0-2.0.107.ubuntu1404
     network_mode: host
-    environment:
-      MESOS_ZK: zk://127.0.0.1:2181/mesos
-      MESOS_QUORUM: 1
-      MESOS_CLUSTER: docker-compose
-      MESOS_REGISTRY: replicated_log # default is in_memory for some reason
-      MESOS_HOSTNAME: ${DOCKER_IP}
-      LIBPROCESS_IP: ${DOCKER_IP}
+    entrypoint:
+      - mesos-master
     depends_on:
-      - zk
-
-  slave-one:
-    build:
-      context: .
-      dockerfile: Dockerfile-slave
-    container_name: mesos_slave_one
-    hostname: mesos_slave_one
-    image: mesosphere/mesos-slave:1.0.0-2.0.89.ubuntu1404
-    network_mode: host
-    pid: host
+      - zookeeper
     environment:
-      MESOS_MASTER: zk://127.0.0.1:2181/mesos
-      MESOS_CONTAINERIZERS: docker,mesos
-      MESOS_PORT: 5051
-      MESOS_RESOURCES: ports(*):[11000-11999]
-      MESOS_HOSTNAME: ${DOCKER_IP}
-      LIBPROCESS_IP: ${DOCKER_IP}
-      MESOS_WORK_DIR: /tmp/mesos
+      - MESOS_IP=127.0.0.1
+      - MESOS_CLUSTER=local
+      - MESOS_HOSTNAME=mesos-master.docker
+      - MESOS_LOG_DIR=/var/log
+      - MESOS_QUORUM=1
+      - MESOS_WORK_DIR=/var/lib/mesos
+      - MESOS_ZK=zk://127.0.0.1:2181/mesos
+
+  mesos-slave:
+    image: mesosphere/mesos-slave:1.1.0-2.0.107.ubuntu1404
+    entrypoint:
+      - mesos-slave
+    privileged: true
+    network_mode: host
+    depends_on:
+      - zookeeper
+      - mesos-master
+    environment:
+      - MESOS_IP=127.0.0.1
+      - MESOS_CONTAINERIZERS=mesos,docker
+      - MESOS_ISOLATOR=cgroups/cpu,cgroups/mem
+      - MESOS_ISOLATION=cgroups/cpu,cgroups/mem,docker/runtime
+      - MESOS_LOG_DIR=var/log
+      - MESOS_MASTER=zk://127.0.0.1:2181/mesos
+      - MESOS_PORT=5051
+      - MESOS_WORK_DIR=/var/lib/mesos
+      - MESOS_EXECUTOR_REGISTRATION_TIMEOUT=5mins
+      - MESOS_EXECUTOR_SHUTDOWN_GRACE_PERIOD=90secs
+      - MESOS_DOCKER_STOP_TIMEOUT=60secs
+      - MESOS_RESOURCES=ports(*):[11000-11999]
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup
       - /usr/bin/docker:/usr/bin/docker
       - /var/run/docker.sock:/var/run/docker.sock
-      - /lib/x86_64-linux-gnu/libsystemd.so.0:/lib/x86_64-linux-gnu/libsystemd.so.0
-      - /lib/x86_64-linux-gnu/libseccomp.so.2:/lib/x86_64-linux-gnu/libseccomp.so.2
-      - /lib/x86_64-linux-gnu/libgpg-error.so.0:/lib/x86_64-linux-gnu/libgpg-error.so.0
-      - /lib/x86_64-linux-gnu/libgcrypt.so.20:/lib/x86_64-linux-gnu/libgcrypt.so.20
-      - /lib/x86_64-linux-gnu/libdevmapper.so.1.02.1:/lib/x86_64-linux-gnu/libdevmapper.so.1.02.1
-    depends_on:
-      - zk
+    privileged: true
 
-
-  slave-two:
-    build:
-      context: .
-      dockerfile: Dockerfile-slave
-    container_name: mesos_slave_two
-    hostname: mesos_slave_two
-    image: mesosphere/mesos-slave:1.0.0-2.0.89.ubuntu1404
+  marathon-service:
+    image:  mesosphere/marathon:latest
     network_mode: host
-    pid: host
-    environment:
-      MESOS_MASTER: zk://127.0.0.1:2181/mesos
-      MESOS_CONTAINERIZERS: docker,mesos
-      MESOS_PORT: 5052
-      MESOS_RESOURCES: ports(*):[11000-11999]
-      MESOS_HOSTNAME: ${DOCKER_IP}
-      LIBPROCESS_IP: ${DOCKER_IP}
-      MESOS_WORK_DIR: /tmp/mesos
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup
-      - /usr/bin/docker:/usr/bin/docker
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /lib/x86_64-linux-gnu/libsystemd.so.0:/lib/x86_64-linux-gnu/libsystemd.so.0
-      - /lib/x86_64-linux-gnu/libseccomp.so.2:/lib/x86_64-linux-gnu/libseccomp.so.2
-      - /lib/x86_64-linux-gnu/libgpg-error.so.0:/lib/x86_64-linux-gnu/libgpg-error.so.0
-      - /lib/x86_64-linux-gnu/libgcrypt.so.20:/lib/x86_64-linux-gnu/libgcrypt.so.20
-      - /lib/x86_64-linux-gnu/libdevmapper.so.1.02.1:/lib/x86_64-linux-gnu/libdevmapper.so.1.02.1
     depends_on:
-      - zk
+      - zookeeper
+      - mesos-master
+    environment:
+      - MARATHON_ZK=zk://127.0.0.1:2181/marathon
+      - MARATHON_MASTER=zk://127.0.0.1:2181/mesos
 
-  marathon:
-    image: mesosphere/marathon:v1.2.0
-    network_mode: host
-    environment:
-      MARATHON_MASTER: zk://127.0.0.1:2181/mesos
-    depends_on:
-      - zk
+  # master:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile-master
+  #   container_name: mesos_master
+  #   hostname: mesos_master
+  #   network_mode: host
+  #   environment:
+  #     MESOS_ZK: zk://127.0.0.1:2181/mesos
+  #     MESOS_QUORUM: 1
+  #     MESOS_CLUSTER: docker-compose
+  #     MESOS_REGISTRY: replicated_log # default is in_memory for some reason
+  #     MESOS_HOSTNAME: ${DOCKER_IP}
+  #     LIBPROCESS_IP: ${DOCKER_IP}
+  #   depends_on:
+  #     - zk
+
+  # slave-one:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile-slave
+  #   container_name: mesos_slave_one
+  #   hostname: mesos_slave_one
+  #   image: mesosphere/mesos-slave:1.0.0-2.0.89.ubuntu1404
+  #   network_mode: host
+  #   pid: host
+  #   environment:
+  #     MESOS_MASTER: zk://127.0.0.1:2181/mesos
+  #     MESOS_CONTAINERIZERS: docker,mesos
+  #     MESOS_PORT: 5051
+  #     MESOS_RESOURCES: ports(*):[11000-11999]
+  #     MESOS_HOSTNAME: ${DOCKER_IP}
+  #     LIBPROCESS_IP: ${DOCKER_IP}
+  #     MESOS_WORK_DIR: /tmp/mesos
+  #   volumes:
+  #     - /sys/fs/cgroup:/sys/fs/cgroup
+  #     - /usr/bin/docker:/usr/bin/docker
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - /lib/x86_64-linux-gnu/libsystemd.so.0:/lib/x86_64-linux-gnu/libsystemd.so.0
+  #     - /lib/x86_64-linux-gnu/libseccomp.so.2:/lib/x86_64-linux-gnu/libseccomp.so.2
+  #     - /lib/x86_64-linux-gnu/libgpg-error.so.0:/lib/x86_64-linux-gnu/libgpg-error.so.0
+  #     - /lib/x86_64-linux-gnu/libgcrypt.so.20:/lib/x86_64-linux-gnu/libgcrypt.so.20
+  #     - /lib/x86_64-linux-gnu/libdevmapper.so.1.02.1:/lib/x86_64-linux-gnu/libdevmapper.so.1.02.1
+  #   depends_on:
+  #     - zk
+
+  # slave-two:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile-slave
+  #   container_name: mesos_slave_two
+  #   hostname: mesos_slave_two
+  #   image: mesosphere/mesos-slave:1.0.0-2.0.89.ubuntu1404
+  #   network_mode: host
+  #   pid: host
+  #   environment:
+  #     MESOS_MASTER: zk://127.0.0.1:2181/mesos
+  #     MESOS_CONTAINERIZERS: docker,mesos
+  #     MESOS_PORT: 5052
+  #     MESOS_RESOURCES: ports(*):[11000-11999]
+  #     MESOS_HOSTNAME: ${DOCKER_IP}
+  #     LIBPROCESS_IP: ${DOCKER_IP}
+  #     MESOS_WORK_DIR: /tmp/mesos
+  #   volumes:
+  #     - /sys/fs/cgroup:/sys/fs/cgroup
+  #     - /usr/bin/docker:/usr/bin/docker
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - /lib/x86_64-linux-gnu/libsystemd.so.0:/lib/x86_64-linux-gnu/libsystemd.so.0
+  #     - /lib/x86_64-linux-gnu/libseccomp.so.2:/lib/x86_64-linux-gnu/libseccomp.so.2
+  #     - /lib/x86_64-linux-gnu/libgpg-error.so.0:/lib/x86_64-linux-gnu/libgpg-error.so.0
+  #     - /lib/x86_64-linux-gnu/libgcrypt.so.20:/lib/x86_64-linux-gnu/libgcrypt.so.20
+  #     - /lib/x86_64-linux-gnu/libdevmapper.so.1.02.1:/lib/x86_64-linux-gnu/libdevmapper.so.1.02.1
+  #   depends_on:
+  #     - zk
+
+  # marathon:
+  #   image: mesosphere/marathon:v1.2.0
+  #   network_mode: host
+  #   environment:
+  #     MARATHON_MASTER: zk://127.0.0.1:2181/mesos
+  #   depends_on:
+  #     - zk
 
   # chronos:
   #   image: mesosphere/chronos:chronos-2.4.0-0.1.20151007110204.ubuntu1404-mesos-0.24.1-0.2.35.ubuntu1404
