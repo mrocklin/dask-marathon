@@ -17,6 +17,7 @@ services:
       - MESOS_CLUSTER=local
       - MESOS_HOSTNAME=mesos-master
       - MESOS_QUORUM=1
+      - MESOS_PORT=5050
       - MESOS_WORK_DIR=/var/lib/mesos
       - MESOS_ZK=zk://127.0.0.1:2181/mesos
 
