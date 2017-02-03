@@ -14,7 +14,7 @@ for app in cg.list_apps():
     cg.delete_app(app.id, force=True)
 
 
-@gen_cluster(client=True, ncores=[], timeout=20)
+@gen_cluster(client=True, ncores=[], timeout=60)
 def test_simple(c, s):
     with MarathonCluster(s, cpus=1, mem=1024) as mc:
         mc.scale_up(1)
