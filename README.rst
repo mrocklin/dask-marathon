@@ -46,8 +46,8 @@ including docker containers, etc..
 
 .. code-block:: python
 
-   from dask_marathon import AdaptiveCluster
-   cluster = AdaptiveCluster(s, marathon_address='http://localhost:8080',
+   from dask_marathon import MarathonCluster
+   cluster = MarathonCluster(s, marathon_address='http://localhost:8080',
                              cpus=1, mem=1000, executable='dask-worker',
                              **kwargs)
 
