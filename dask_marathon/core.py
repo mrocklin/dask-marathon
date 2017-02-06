@@ -11,11 +11,13 @@ logger = logging.getLogger(__file__)
 
 
 class MarathonCluster(object):
+
     def __init__(self, scheduler,
                  executable='dask-worker',
                  docker_image='mrocklin/dask-distributed',
                  marathon_address='http://localhost:8080',
-                 name=None, **kwargs):
+                 username=None, password=None, auth_token=None,
+                 app_name=None, **kwargs):
         self.scheduler = scheduler
         self.executor = ThreadPoolExecutor(1)
 
@@ -28,8 +30,8 @@ class MarathonCluster(object):
 
         ports = [{'port': 0,
                   'protocol': 'tcp',
-                  'name': name}
-                 for name in ['worker', 'nanny', 'http']]
+                  'name': port_name}
+                 for port_name in ['worker', 'nanny', 'http']]
 
         if 'mem' in kwargs:
             args.extend(['--memory-limit',
@@ -44,12 +46,15 @@ class MarathonCluster(object):
                           **kwargs)
 
         # Connect and register app
-        self.client = MarathonClient(marathon_address)
-        self.app = self.client.create_app(name or 'dask-%s' % uuid.uuid4(), app)
+        self.client = MarathonClient(servers=marathon_address,
+                                     username=username, password=password,
+                                     auth_token=auth_token)
+        self.app = self.client.create_app(
+            app_name or 'dask-%s' % uuid.uuid4(), app)
 
     def scale_up(self, instances):
         self.executor.submit(self.client.scale_app,
-                self.app.id, instances=instances)
+                             self.app.id, instances=instances)
 
     def scale_down(self, workers):
         for w in workers:
